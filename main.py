@@ -6,7 +6,7 @@ from flask import Flask
 import threading
 
 TELEGRAM_TOKEN = os.environ.get('TELEGRAM_TOKEN', '8768715789:AAGgFiAByPexTWu6iyMIFYZC82bhpNm8Pqo')
-GEMINI_KEY = os.environ.get('GEMINI_KEY', 'AIzaSyC4L121FsH2KGLCFnWCOxHhiXl-pS9rHlU')
+GEMINI_KEY = os.environ.get('GEMINI_KEY', 'AIzaSyBN0CrlujvP68DU0kSMJcbqZshWhjas5zA')
 
 MASTER_INSTRUCTIONS = """
 هویت و رسالت:
