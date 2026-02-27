@@ -5,8 +5,8 @@ import os
 from flask import Flask
 import threading
 
-TELEGRAM_TOKEN = os.environ.get('TELEGRAM_TOKEN', '')
-GEMINI_KEY = os.environ.get('GEMINI_KEY', '')
+TELEGRAM_TOKEN = os.environ.get('TELEGRAM_TOKEN', '8768715789:AAGgFiAByPexTWu6iyMIFYZC82bhpNm8Pqo')
+GEMINI_KEY = os.environ.get('GEMINI_KEY', 'AIzaSyC4L121FsH2KGLCFnWCOxHhiXl-pS9rHlU')
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_KEY}"
 
 MASTER_INSTRUCTIONS = """
