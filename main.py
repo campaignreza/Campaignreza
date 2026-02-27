@@ -1,11 +1,13 @@
 import telebot
 import google.generativeai as genai
 
-# --- اطلاعات اتصال (این دو مورد را حتماً با کلیدهای خودت پر کن) ---
+# --- [مرحله ۱: تنظیمات اتصال] ---
+# توکن بات‌فادر و کلید گوگل را دقیقاً بین دو کوتیشن قرار بده
 TELEGRAM_TOKEN = '8768715789:AAGgFiAByPexTWu6iyMIFYZC82bhpNm8Pqo'
 GEMINI_KEY = 'AIzaSyC4L121FsH2KGLCFnWCOxHhiXl-pS9rHlU'
 
-# --- دستورالعمل نهایی، تشریحی و فوق‌گسترده معمارِ مستر v4.0 ---
+# --- [مرحله ۲: دستورالعمل تشریحی معمارِ مستر v4.0] ---
+# این بخش دقیقاً بر اساس استراتژی گنج‌یابی و مهندسی فروش شماست
 MASTER_INSTRUCTIONS = """
 هویت و فلسفه وجودی:
 تو از این لحظه به بعد، هویتِ یک هوش مصنوعی معمولی را نداری. تو "معمارِ مستر" هستی؛ یک استراتژیست ارشد در مهندسی معکوسِ فروش که به "دستگاهِ گنج‌یابی" مجهز است. تو باید بدانی که در بازارِ امروز، مشتری‌ها از "آموزش" متنفرند و تشنه‌ی "پول، اعتبار و راحتی" هستند. ماموریت تو این است که با استخراجِ گنج‌های نهفته‌ی یک محصول، آن را به تنها راهِ نجاتِ مخاطب تبدیل کنی، جوری که با خواندنِ تحلیل‌های تو، "مو به تنِ مخاطب سیخ شود".
@@ -34,26 +36,33 @@ MASTER_INSTRUCTIONS = """
 فرمان نهایی: لحنِ تو باید "کُت‌وکلف"، رفیقانه و بازارساز باشد. از کلماتِ کتابی دوری کن. تو باید جوری بنویسی که مخاطب حس کند اگر این فرصت را از دست بدهد، بزرگترین اشتباهِ عمرش را مرتکب شده است. حلیم مدد!
 """
 
-# تنظیمات هوش مصنوعی جمنای
-genai.configure(api_key=GEMINI_KEY)
-model = genai.GenerativeModel('gemini-1.5-flash', system_instruction=MASTER_INSTRUCTIONS)
-bot = telebot.TeleBot(TELEGRAM_TOKEN)
+# --- [مرحله ۳: راه‌اندازی و رفع خطای مدل] ---
+try:
+    genai.configure(api_key=GEMINI_KEY)
+    # اصلاح نام مدل به gemini-1.5-flash-latest برای هماهنگی با API
+    model = genai.GenerativeModel('gemini-1.5-flash-latest', system_instruction=MASTER_INSTRUCTIONS)
+    bot = telebot.TeleBot(TELEGRAM_TOKEN)
+except Exception as e:
+    print(f"Error in Setup: {e}")
 
-# مدیریت پیام‌های ورودی
+# --- [مرحله ۴: مدیریت گفتگو] ---
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    welcome_text = "سلام رفیق! معمارِ مستر آماده‌ست. اول بگو حوزه فعالیتت چیه و قراره چه محصولی رو به الماس تبدیل کنیم؟ (حلیم مدد)"
-    bot.reply_to(message, welcome_text)
+    welcome_msg = "سلام رفیق! معمارِ مستر آماده‌ست تا گنج‌های محصولت رو دربیاره. اول بگو حوزه فعالیتت چیه و قراره چه محصولی رو به الماس تبدیل کنیم؟ (حلیم مدد)"
+    bot.reply_to(message, welcome_msg)
 
 @bot.message_handler(func=lambda message: True)
 def handle_message(message):
     try:
-        # ایجاد یک سشن چت جدید برای هر پیام تا دستورالعمل‌ها همیشه در یادش بماند
+        # استفاده از سشن چت برای حفظ پیوستگی دستورالعمل‌ها
         chat_session = model.start_chat(history=[])
         response = chat_session.send_message(message.text)
         bot.reply_to(message, response.text)
     except Exception as e:
-        bot.reply_to(message, f"یه مشکلی پیش اومد رفیق. مطمئن شو کلید جمنای و توکن تلگرامت درسته. خطا: {str(e)}")
+        # نمایش خطای دقیق برای مچ‌گیری فنی
+        bot.reply_to(message, f"یه مشکلی پیش اومد رفیق. خطا رو چک کن: \n{str(e)}")
 
-# شروع به کار ربات
-bot.polling()
+# شروع موتور ربات
+if __name__ == "__main__":
+    print("Master Architect Bot is Running...")
+    bot.polling(none_stop=True)
