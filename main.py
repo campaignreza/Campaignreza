@@ -6,8 +6,8 @@ from flask import Flask
 import threading
 
 # --- [تنظیمات دسترسی - توکن‌های خودت را اینجا بگذار] ---
-TELEGRAM_TOKEN = 'توکن_تلگرام_شما'
-GEMINI_KEY = 'کلید_جمنای_شما'
+TELEGRAM_TOKEN = '8768715789:AAGgFiAByPexTWu6iyMIFYZC82bhpNm8Pqo'
+GEMINI_KEY = 'AIzaSyC4L121FsH2KGLCFnWCOxHhiXl-pS9rHlU'
 
 # --- [دستورالعمل استراتژیک معمارِ مستر v12.0 - مبتنی بر PDF] ---
 MASTER_INSTRUCTIONS = """
