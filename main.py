@@ -5,8 +5,12 @@ import os
 from flask import Flask
 import threading
 
-TELEGRAM_TOKEN = os.environ.get('TELEGRAM_TOKEN', '8768715789:AAGgFiAByPexTWu6iyMIFYZC82bhpNm8Pqo')
-GEMINI_KEY = os.environ.get('GEMINI_KEY', 'AIzaSyBN0CrlujvP68DU0kSMJcbqZshWhjas5zA')
+TELEGRAM_TOKEN = os.environ.get('TELEGRAM_TOKEN', '')
+GEMINI_KEY = os.environ.get('GEMINI_KEY', '')
+
+# لاگ برای دیباگ
+print(f"🔑 GEMINI_KEY loaded: {GEMINI_KEY[:10]}..." if GEMINI_KEY else "❌ GEMINI_KEY is empty!")
+print(f"🤖 TELEGRAM_TOKEN loaded: {TELEGRAM_TOKEN[:10]}..." if TELEGRAM_TOKEN else "❌ TELEGRAM_TOKEN is empty!")
 
 MASTER_INSTRUCTIONS = """
 هویت و رسالت:
@@ -58,13 +62,10 @@ user_history = {}
 ACTIVE_MODEL = None
 
 def get_available_model():
-    """پیدا کردن مدل در دسترس به صورت خودکار"""
     models = [
         "gemini-2.0-flash",
         "gemini-1.5-flash-latest",
         "gemini-1.5-flash",
-        "gemini-1.5-pro-latest",
-        "gemini-1.5-pro",
     ]
     for model in models:
         try:
@@ -73,14 +74,12 @@ def get_available_model():
                 "contents": [{"role": "user", "parts": [{"text": "test"}]}]
             }
             r = requests.post(url, json=test_payload, timeout=15)
+            print(f"Model {model}: status {r.status_code}")
             if r.status_code == 200:
                 print(f"✅ Active model: {model}")
                 return model
-            else:
-                print(f"❌ Model {model}: {r.status_code}")
         except Exception as e:
             print(f"❌ Model {model} error: {e}")
-            continue
     return None
 
 
