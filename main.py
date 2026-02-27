@@ -6,8 +6,8 @@ from flask import Flask
 import threading
 
 # --- [تنظیمات دسترسی] ---
-TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "8768715789:AAGgFiAByPexTWu6iyMIFYZC82bhpNm8Pqo")
-GEMINI_KEY = os.environ.get("GEMINI_KEY", "AIzaSyC4L121FsH2KGLCFnWCOxHhiXl-pS9rHlU")
+TELEGRAM_TOKEN = '8768715789:AAGgFiAByPexTWu6iyMIFYZC82bhpNm8Pqo'
+GEMINI_KEY = 'AIzaSyC4L121FsH2KGLCFnWCOxHhiXl-pS9rHlU'
 
 # --- [دستورالعمل جامع معمارِ مستر v7.0 - مهندسی معکوس فروش و ثروت] ---
 MASTER_INSTRUCTIONS = """
@@ -38,7 +38,7 @@ MASTER_INSTRUCTIONS = """
    - ستون ۲ (ارزش واقعی): حمله به مشکل اصلی. [span_14](start_span)چگونگی مهم نیست، "حل شدن" مهم است[span_14](end_span).
    - [span_15](start_span)ستون ۳ (مخاطب‌شناسی عمیق): حداقل ۱۵ مورد از دردهای شبانه و آرزوهای مخاطب[span_15](end_span). + [span_16](start_span)بلک لیست (چه کسانی نباید بخرند تا وقت و انرژی کمپین تلف نشود)[span_16](end_span).
    - ستون ۴ (نتایج ملموس): نوشتن از "زاویه‌های شیرین"؛ [span_17](start_span)نتایجی که هویت فرد را تغییر می‌دهد[span_17](end_span).
-   - [span_18](start_span)[span_19](start_span)ستون ۵ (انحصار و تیر خلاص): یک مزیت انحصاری واقعی همراه با "تشدیدکننده" (مثل پشتیبانی مادام‌العمر یا آنالیز اختصاصی) که کار را تمام کند[span_18](end_span)[span_19](end_span).
+   - [span_18](start_span)[span_19](start_span)ستون ۵ (انحصار و تیر خلاص): یک مزیت انحصاری واقعی همراه با "تشدیدکننده"[span_18](end_span)[span_19](end_span).
 
 ۵. انفجار محتوا (POINT نویسی):
    - [span_20](start_span)تولید ۱۰۰ پوینت استراتژیک در دسته‌های میل، سادگی، اثبات و انحصار[span_20](end_span).
@@ -47,65 +47,64 @@ MASTER_INSTRUCTIONS = """
 لحن تو: مقتدر، رفیقانه، لاتی و به شدت فنی. تو برای فروختن ساخته شده‌ای، نه برای آموزش دادن معمولی!
 """
 
-# --- [بخش فنی سوپر پایدار] ---
+# --- سرور ---
 app = Flask(__name__)
 
 @app.route('/')
 def health():
     return "Master Architect v7.0 is Live!", 200
 
-try:
-    genai.configure(api_key=GEMINI_KEY)
+# --- اتصال Gemini ---
+genai.configure(api_key=GEMINI_KEY)
 
-    model = genai.GenerativeModel(
-        model_name="gemini-1.5-flash",
-        system_instruction=MASTER_INSTRUCTIONS
-    )
+model = genai.GenerativeModel(
+    model_name="gemini-1.5-flash",
+    system_instruction=MASTER_INSTRUCTIONS
+)
 
-    bot = telebot.TeleBot(TELEGRAM_TOKEN)
+# ⭐ مهم‌ترین بخش اصلاح شده (حل مشکل فقط سوال اول)
+chat_session = model.start_chat()
 
-except Exception as e:
-    print(f"Setup Error: {e}")
+bot = telebot.TeleBot(TELEGRAM_TOKEN)
 
-# --- حافظه مکالمه ---
-chat_cache = {}
-
+# --- هندلر ---
 @bot.message_handler(commands=['start'])
 def start(message):
-    bot.reply_to(message,
-                 "درود! معمارِ مستر با تمام توان استراتژیک آماده کالبدشکافی محصول شماست. برای شروع، دقیقاً بگو حوزه فعالیتت چیه و قراره چه محصولی رو به الماس تبدیل کنیم؟")
+    bot.reply_to(
+        message,
+        "درود! معمارِ مستر با تمام توان استراتژیک آماده کالبدشکافی محصول شماست. برای شروع، دقیقاً بگو حوزه فعالیتت چیه و قراره چه محصولی رو به الماس تبدیل کنیم؟"
+    )
 
 @bot.message_handler(func=lambda m: True)
 def handle(message):
     try:
-        user_id = message.chat.id
+        response = chat_session.send_message(message.text)
 
-        if user_id not in chat_cache:
-            chat_cache[user_id] = []
-
-        chat_cache[user_id].append(message.text)
-
-        prompt_text = "\n".join(chat_cache[user_id][-10:])
-
-        for _ in range(3):
-            try:
-                response = model.generate_content(prompt_text)
-                bot.reply_to(message, response.text)
-                break
-            except:
-                time.sleep(1)
+        if response and response.text:
+            bot.reply_to(message, response.text)
 
     except Exception as e:
         bot.reply_to(message, f"خطای موقت در سیستم: {str(e)}")
 
-# --- اجرا ---
+# --- Polling پایدار ---
 def run_polling():
-    bot.remove_webhook()
-    time.sleep(1)
-    bot.polling(none_stop=True)
+    while True:
+        try:
+            bot.remove_webhook()
 
+            bot.infinity_polling(
+                timeout=60,
+                long_polling_timeout=60,
+                none_stop=True
+            )
+
+        except Exception as e:
+            print(e)
+            time.sleep(5)
+
+# --- اجرا ---
 if __name__ == "__main__":
-    threading.Thread(target=run_polling).start()
+    threading.Thread(target=run_polling, daemon=True).start()
 
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
