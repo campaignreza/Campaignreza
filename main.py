@@ -58,7 +58,7 @@ def health():
 genai.configure(api_key=GEMINI_KEY)
 
 model = genai.GenerativeModel(
-    model_name="gemini-1.5-flash",
+    model_name="gemini-1.5-pro-latest",
     system_instruction=MASTER_INSTRUCTIONS
 )
 
