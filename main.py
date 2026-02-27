@@ -54,15 +54,45 @@ def health():
     return "Master Architect v7.0 is Live!", 200
 
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
-
-# تاریخچه مکالمه هر کاربر
 user_history = {}
+ACTIVE_MODEL = None
+
+def get_available_model():
+    """پیدا کردن مدل در دسترس به صورت خودکار"""
+    models = [
+        "gemini-2.0-flash",
+        "gemini-1.5-flash-latest",
+        "gemini-1.5-flash",
+        "gemini-1.5-pro-latest",
+        "gemini-1.5-pro",
+    ]
+    for model in models:
+        try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={GEMINI_KEY}"
+            test_payload = {
+                "contents": [{"role": "user", "parts": [{"text": "test"}]}]
+            }
+            r = requests.post(url, json=test_payload, timeout=15)
+            if r.status_code == 200:
+                print(f"✅ Active model: {model}")
+                return model
+            else:
+                print(f"❌ Model {model}: {r.status_code}")
+        except Exception as e:
+            print(f"❌ Model {model} error: {e}")
+            continue
+    return None
+
 
 def ask_gemini(user_id, user_message):
-    """ارسال پیام به Gemini API با REST مستقیم"""
+    global ACTIVE_MODEL
+    if ACTIVE_MODEL is None:
+        ACTIVE_MODEL = get_available_model()
+        if ACTIVE_MODEL is None:
+            return "❌ هیچ مدل Gemini در دسترس نیست. کلید API را چک کن."
+
     if user_id not in user_history:
         user_history[user_id] = []
-        # اولین پیام = دستورالعمل + سوال کاربر
         first_message = MASTER_INSTRUCTIONS + "\n\n" + user_message
         user_history[user_id].append({
             "role": "user",
@@ -82,8 +112,7 @@ def ask_gemini(user_id, user_message):
         }
     }
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={GEMINI_KEY}"
-
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{ACTIVE_MODEL}:generateContent?key={GEMINI_KEY}"
     response = requests.post(url, json=payload, timeout=60)
     response.raise_for_status()
 
@@ -95,7 +124,6 @@ def ask_gemini(user_id, user_message):
         "parts": [{"text": reply}]
     })
 
-    # حفظ حداکثر ۲۰ پیام آخر
     if len(user_history[user_id]) > 20:
         user_history[user_id] = user_history[user_id][-20:]
 
@@ -132,7 +160,7 @@ def handle(message):
             bot.reply_to(message, reply)
     except Exception as e:
         print(f"Error: {e}")
-        bot.reply_to(message, f"⚠️ خطا: {str(e)[:200]}")
+        bot.reply_to(message, f"⚠️ خطا: {str(e)[:300]}")
 
 def run_polling():
     print("🤖 Bot started...")
