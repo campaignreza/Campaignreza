@@ -5,69 +5,171 @@ import os
 from flask import Flask
 import threading
 
-# --- [تنظیمات دسترسی - توکن‌های خودت را اینجا بگذار] ---
-TELEGRAM_TOKEN = '8768715789:AAGgFiAByPexTWu6iyMIFYZC82bhpNm8Pqo'
-GEMINI_KEY = 'AIzaSyC4L121FsH2KGLCFnWCOxHhiXl-pS9rHlU'
+# --- [تنظیمات] ---
+TELEGRAM_TOKEN = os.environ.get('TELEGRAM_TOKEN', '8768715789:AAGgFiAByPexTWu6iyMIFYZC82bhpNm8Pqo')
+GEMINI_KEY = os.environ.get('GEMINI_KEY', 'AIzaSyC4L121FsH2KGLCFnWCOxHhiXl-pS9rHlU')
 
-# --- [دستورالعمل استراتژیک معمارِ مستر v12.0 - مبتنی بر PDF] ---
 MASTER_INSTRUCTIONS = """
-هویت: تو "معمارِ مستر" هستی؛ استراتژیست ارشد مهندسی معکوس فروش.
-رسالت: تو باید محصول را کالبدشکافی کنی تا "گنج" آن پیدا شود. اگر گنج نداشت، در روند تحلیل برایش گنج بساز.
+هویت و رسالت:
+تو "معمارِ مستر" هستی؛ یک متفکر استراتژیک و مهندسِ معکوسِ کمپین‌های فروش سنگین.
+وظیفه تو استخراج "گنجینه" از دل محصولاتی است که دیگران معمولی می‌بینند.
+تو باید محصول را به گونه‌ای بازتعریف کنی که مخاطب احساس کند این تنها راه فرار از رکود
+و رسیدن به خوشبختی، سلامتی یا ثروت است.
 
-قوانین تحلیل (بر اساس فایل شناخت محصول):
-1. تکمیل خودکار: به جواب‌های کوتاه اکتفا نکن. با دیتابیس خودت تمام دردهای پنهان حوزه را بیرون بکش.
-   - سلامتی (لاغری): روی تغییر هویت و اعتماد به نفس متمرکز شو.
-   - ثروت: روی درآمد بالا در وضع فعلی بازار مانور بده.
-   - روابط (عزت نفس): روی آرامش و خوشبختی واقعی متمرکز شو.
-2. فیلترهای سه‌گانه: محصول را از ۳ صافی "ثروت"، "قدرت" و "راحتی (سرعت)" عبور بده.
-3. چگونگی مهم نیست، حل شدن مهم است: روی نتیجه نهایی و حل مشکل اصلی مخاطب تمرکز کن.
+لایه‌های تحلیلی اجباری:
 
-خروجی نهایی (سند 5 ستونه IBS):
-- ستون ۱: محصول چیست (سیستم میان‌بر).
-- ستون ۲: ارزش واقعی (حل مشکل اصلی).
-- ستون ۳: مناسب چه کسانی است (حداقل ۱۵ مورد درد و آرزو) + بلک لیست (چه کسانی نباید بخرند).
-- ستون ۴: نتایج ملموس (زاویه‌های شیرین که مو به تن سیخ می‌کند).
-- ستون ۵: انحصار (مزیت + تشدیدکننده مثل پشتیبانی مادام‌العمر).
+۱. دستگاه گنج‌یابی:
+   - در محصولات مالی (فارکس، سرمایه‌گذاری): روی ثروت، قدرت و خروج از ذلت مالی تمرکز کن.
+   - در محصولات سلامتی و زیبایی (لاغری، پوست): روی تغییر هویت و اعتماد به نفس تمرکز کن.
+   - در محصولات روابط و روان (عزت نفس): روی آرامش و کیفیت زندگی مانور بده.
 
-POINT نویسی: تولید ۱۰۰ پوینت در دسته‌های میل، سادگی، اثبات و انحصار.
+۲. فیلترهای سه‌گانه (اجباری):
+   - فیلتر ثروت: چطور باعث رشد مالی یا صرفه‌جویی عظیم می‌شود؟
+   - فیلتر قدرت: چطور جایگاه اجتماعی فرد را بالا می‌برد؟
+   - فیلتر راحتی: چطور سختی‌ها را حذف می‌کند؟
+
+۳. پروتکل مصاحبه (ایستگاه به ایستگاه):
+   - ایستگاه ۱: حوزه فعالیت و محصول؟
+   - ایستگاه ۲: وعده بزرگ و ادعای شیرین؟ (عددی و خیره‌کننده)
+   - ایستگاه ۳: ویترین و اعتمادسازی؟
+   - ایستگاه ۴: قیمت و بهانه "باید فکر کنم"؟
+
+۴. خروجی نهایی - سند ۵ ستونه:
+   - ستون ۱ (محصول چیست؟): تعریف به عنوان "سیستم میان‌بر" و "ناجی"
+   - ستون ۲ (ارزش واقعی): حمله به مشکل اصلی
+   - ستون ۳ (مخاطب‌شناسی): حداقل ۱۵ درد شبانه + بلک لیست
+   - ستون ۴ (نتایج ملموس): از زاویه تغییر هویت
+   - ستون ۵ (انحصار): مزیت انحصاری + تشدیدکننده
+
+۵. انفجار محتوا:
+   - ۱۰۰ پوینت استراتژیک در دسته‌های میل، سادگی، اثبات، انحصار
+   - نقشه IBS تلگرام با سناریوی وویس و پیام پین‌بند
+
+لحن: مقتدر، رفیقانه و فنی. برای فروختن ساخته شده‌ای!
 """
 
+# --- [Flask App] ---
 app = Flask(__name__)
+
 @app.route('/')
-def status(): return "Master Architect System is LIVE!", 200
+def health():
+    return "Master Architect v7.0 is Live!", 200
 
-# جلوگیری از خطاهای احتمالی در تعریف ربات
-try:
-    bot = telebot.TeleBot(TELEGRAM_TOKEN)
-    genai.configure(api_key=GEMINI_KEY)
-    # رفع خطای 404 با استفاده از نسخه پایدار
-    model = genai.GenerativeModel('gemini-1.5-flash', system_instruction=MASTER_INSTRUCTIONS)
-except Exception as e:
-    print(f"Error in setup: {e}")
+@app.route('/health')
+def health_check():
+    return {"status": "ok", "bot": "MasterArchitect"}, 200
 
+# --- [راه‌اندازی Gemini] ---
+def setup_gemini():
+    try:
+        genai.configure(api_key=GEMINI_KEY)
+        model = genai.GenerativeModel(
+            model_name='gemini-1.5-flash',  # ✅ فرمت صحیح
+            system_instruction=MASTER_INSTRUCTIONS
+        )
+        return model
+    except Exception as e:
+        print(f"❌ Gemini Setup Error: {e}")
+        return None
+
+model = setup_gemini()
+bot = telebot.TeleBot(TELEGRAM_TOKEN)
+
+# --- [مدیریت سشن مکالمه برای هر کاربر] ---
+user_sessions = {}
+
+def get_chat_session(user_id):
+    """هر کاربر یک سشن جداگانه دارد تا context حفظ شود"""
+    if user_id not in user_sessions:
+        user_sessions[user_id] = model.start_chat(history=[])
+    return user_sessions[user_id]
+
+# --- [هندلرهای ربات] ---
 @bot.message_handler(commands=['start'])
-def welcome(message):
-    bot.reply_to(message, "درود! معمارِ مستر آماده کالبدشکافی محصول شماست. حوزه فعالیت و محصولتان چیست؟")
+def start(message):
+    user_id = message.from_user.id
+    # ریست سشن برای شروع مجدد
+    if user_id in user_sessions:
+        del user_sessions[user_id]
+    
+    welcome = (
+        "🏛 *معمارِ مستر v7.0 آنلاین است!*\n\n"
+        "سیستم کالبدشکافی محصول با موتور Gemini فعال شد.\n\n"
+        "🎯 *برای شروع بگو:*\n"
+        "حوزه فعالیتت چیه و چه محصولی داری؟\n"
+        "من تمام پتانسیل پنهانش رو بیرون می‌کشم! 💰"
+    )
+    bot.reply_to(message, welcome, parse_mode='Markdown')
+
+@bot.message_handler(commands=['reset'])
+def reset_session(message):
+    user_id = message.from_user.id
+    if user_id in user_sessions:
+        del user_sessions[user_id]
+    bot.reply_to(message, "🔄 سشن ریست شد. دوباره شروع کن!")
 
 @bot.message_handler(func=lambda m: True)
-def handle_chat(message):
+def handle(message):
+    if model is None:
+        bot.reply_to(message, "❌ خطا در اتصال به Gemini. با ادمین تماس بگیر.")
+        return
+    
+    user_id = message.from_user.id
+    
+    # نشانگر تایپ
+    bot.send_chat_action(message.chat.id, 'typing')
+    
     try:
-        bot.send_chat_action(message.chat.id, 'typing')
-        response = model.generate_content(message.text)
-        bot.reply_to(message, response.text)
+        chat = get_chat_session(user_id)
+        response = chat.send_message(message.text)
+        
+        reply_text = response.text
+        
+        # تقسیم پیام‌های بلند (حد تلگرام ۴۰۹۶ کاراکتر)
+        if len(reply_text) > 4096:
+            chunks = [reply_text[i:i+4096] for i in range(0, len(reply_text), 4096)]
+            for chunk in chunks:
+                bot.reply_to(message, chunk)
+                time.sleep(0.5)
+        else:
+            bot.reply_to(message, reply_text)
+            
     except Exception as e:
-        bot.reply_to(message, f"خطای سیستمی: {str(e)}")
+        error_msg = str(e)
+        print(f"❌ Error for user {user_id}: {error_msg}")
+        
+        # ریست سشن در صورت خطا
+        if user_id in user_sessions:
+            del user_sessions[user_id]
+        
+        bot.reply_to(message, f"⚠️ خطای موقت: {error_msg[:200]}\nدوباره تلاش کن.")
 
-def start_polling():
+# --- [اجرای Polling در Thread جداگانه] ---
+def run_polling():
+    print("🤖 Bot polling started...")
     while True:
         try:
             bot.remove_webhook()
-            bot.polling(none_stop=True, interval=0, timeout=20)
-        except Exception:
+            time.sleep(1)
+            bot.polling(
+                none_stop=True,
+                interval=0,
+                timeout=60,
+                long_polling_timeout=60
+            )
+        except Exception as e:
+            print(f"⚠️ Polling error: {e}. Restarting in 5s...")
             time.sleep(5)
 
+# --- [نقطه اجرا] ---
 if __name__ == "__main__":
-    threading.Thread(target=start_polling).start()
-    # استفاده از پورت پیش‌فرض رندر
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host='0.0.0.0', port=port)
+    print("🚀 Starting Master Architect...")
+    
+    # Thread ربات به عنوان daemon (با Flask زندگی و می‌میره)
+    bot_thread = threading.Thread(target=run_polling, daemon=True)
+    bot_thread.start()
+    
+    # Flask اصلی روی پورت Render
+    port = int(os.environ.get("PORT", 5000))
+    print(f"🌐 Flask running on port {port}")
+    app.run(host='0.0.0.0', port=port, debug=False)
