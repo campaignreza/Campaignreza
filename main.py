@@ -51,7 +51,7 @@ def status():
 try:
     # ✅ اتصال جدید و پایدار به Gemini (رفع قطعی 404)
     client = genai.Client(api_key=GEMINI_KEY)
-    MODEL_NAME = "gemini-1.5-flash"
+    MODEL_NAME = "gemini-pro"
     bot = telebot.TeleBot(TELEGRAM_TOKEN)
 except Exception as e:
     print(f"System Error: {e}")
