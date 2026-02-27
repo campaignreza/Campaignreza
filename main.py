@@ -1,9 +1,9 @@
 import telebot
-import google.generativeai as genai
 import time
 import os
 from flask import Flask
 import threading
+from google import genai   # ✅ SDK جدید پایدار
 
 # --- [تنظیمات دسترسی] ---
 TELEGRAM_TOKEN = '8768715789:AAGgFiAByPexTWu6iyMIFYZC82bhpNm8Pqo'
@@ -49,9 +49,9 @@ def status():
     return "Master Architect System is Active", 200
 
 try:
-    genai.configure(api_key=GEMINI_KEY)
-    # اصلاح نام مدل برای رفع خطای 404 در تلگرام
-    model = genai.GenerativeModel('gemini-1.5-flash', system_instruction=MASTER_INSTRUCTIONS)
+    # ✅ اتصال جدید و پایدار به Gemini (رفع قطعی 404)
+    client = genai.Client(api_key=GEMINI_KEY)
+    MODEL_NAME = "gemini-1.5-flash"
     bot = telebot.TeleBot(TELEGRAM_TOKEN)
 except Exception as e:
     print(f"System Error: {e}")
@@ -63,21 +63,25 @@ def start_command(message):
 @bot.message_handler(func=lambda m: True)
 def handle_messages(message):
     try:
-        # استفاده از مدل برای پاسخگویی مستقیم
-        response = model.generate_content(message.text)
+        # ✅ استفاده از API جدید پایدار
+        response = client.models.generate_content(
+            model=MODEL_NAME,
+            contents=message.text,
+            config={
+                "system_instruction": MASTER_INSTRUCTIONS
+            }
+        )
         bot.reply_to(message, response.text)
     except Exception as e:
         bot.reply_to(message, f"خطای سیستمی: {str(e)}")
 
 def start_polling():
-    # رفع خطای تداخل 409
     bot.remove_webhook()
     time.sleep(1)
     print("Bot is polling...")
     bot.polling(none_stop=True)
 
 if __name__ == "__main__":
-    # اجرای همزمان ربات و Flask برای رفع خطای پورت در رندر
     threading.Thread(target=start_polling).start()
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
