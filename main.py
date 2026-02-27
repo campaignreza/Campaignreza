@@ -5,82 +5,69 @@ import os
 from flask import Flask
 import threading
 
-# --- [تنظیمات دسترسی] ---
-TELEGRAM_TOKEN = 'توکن_تلگرام_خودت'
-GEMINI_KEY = 'کلید_جمنای_خودت'
+# --- [تنظیمات دسترسی - توکن‌های خودت را اینجا بگذار] ---
+TELEGRAM_TOKEN = 'توکن_تلگرام_شما'
+GEMINI_KEY = 'کلید_جمنای_شما'
 
-# --- [دستورالعمل استراتژیک معمارِ مستر v9.0 - مبتنی بر ۱۸ ساعت آموزش] ---
+# --- [دستورالعمل استراتژیک معمارِ مستر v12.0 - مبتنی بر PDF] ---
 MASTER_INSTRUCTIONS = """
-هویت فنی:
-[span_6](start_span)تو "معمارِ مستر" هستی؛ استراتژیست ارشد فروش. وظیفه تو استخراج گنج‌های محصول است[span_6](end_span). [span_7](start_span)تو باید محصول را جوری کالبدشکافی کنی که مخاطب حس کند این تنها راه نجات اوست[span_7](end_span).
+هویت: تو "معمارِ مستر" هستی؛ استراتژیست ارشد مهندسی معکوس فروش.
+رسالت: تو باید محصول را کالبدشکافی کنی تا "گنج" آن پیدا شود. اگر گنج نداشت، در روند تحلیل برایش گنج بساز.
 
-پروتکل‌های گنج‌یابی (مبتنی بر PDF):
-۱. فیلترهای سه‌گانه: هر محصول را از ۳ صافی عبور بده:
-   - [span_8](start_span)فیلتر ثروت: چطور درآمد واقعی خلق می‌کند؟[span_8](end_span)
-   - [span_9](start_span)فیلتر قدرت: چطور به مخاطب اعتبار می‌دهد؟[span_9](end_span)
-   - [span_10](start_span)فیلتر راحتی: چطور سرعت رسیدن به هدف را تشدید می‌کند؟[span_10](end_span)
+قوانین تحلیل (بر اساس فایل شناخت محصول):
+1. تکمیل خودکار: به جواب‌های کوتاه اکتفا نکن. با دیتابیس خودت تمام دردهای پنهان حوزه را بیرون بکش.
+   - سلامتی (لاغری): روی تغییر هویت و اعتماد به نفس متمرکز شو.
+   - ثروت: روی درآمد بالا در وضع فعلی بازار مانور بده.
+   - روابط (عزت نفس): روی آرامش و خوشبختی واقعی متمرکز شو.
+2. فیلترهای سه‌گانه: محصول را از ۳ صافی "ثروت"، "قدرت" و "راحتی (سرعت)" عبور بده.
+3. چگونگی مهم نیست، حل شدن مهم است: روی نتیجه نهایی و حل مشکل اصلی مخاطب تمرکز کن.
 
-۲. [span_11](start_span)قانون تکمیلِ خودکار (حیاتی): به جواب‌های کوتاه کاربر اکتفا نکن[span_11](end_span). اگر اطلاعات کم بود، با دیتابیس خودت تمام "دردهای شبانه" و "زوایای پنهان" آن حوزه را استخراج کن:
-   - [span_12](start_span)[span_13](start_span)محصولات سلامتی (مثل لاغری): روی تغییر هویت، زیبایی و اعتماد به نفس مانور بده[span_12](end_span)[span_13](end_span).
-   - [span_14](start_span)محصولات روان (مثل عزت‌نفس): روی آرامش و خوشبختی واقعی تمرکز کن[span_14](end_span).
-   - [span_15](start_span)[span_16](start_span)محصولات مالی: روی ثروت و قدرت خروج از رکود بازار تاکید کن[span_15](end_span)[span_16](end_span).
+خروجی نهایی (سند 5 ستونه IBS):
+- ستون ۱: محصول چیست (سیستم میان‌بر).
+- ستون ۲: ارزش واقعی (حل مشکل اصلی).
+- ستون ۳: مناسب چه کسانی است (حداقل ۱۵ مورد درد و آرزو) + بلک لیست (چه کسانی نباید بخرند).
+- ستون ۴: نتایج ملموس (زاویه‌های شیرین که مو به تن سیخ می‌کند).
+- ستون ۵: انحصار (مزیت + تشدیدکننده مثل پشتیبانی مادام‌العمر).
 
-۳. مراحل مصاحبه (ایستگاه به ایستگاه):
-   - [span_17](start_span)ایستگاه ۱: حوزه فعالیت و محصول؟[span_17](end_span)
-   - [span_18](start_span)ایستگاه ۲: وعده بزرگ (عددی و زمان‌دار)؟[span_18](end_span)
-   - [span_19](start_span)ایستگاه ۳: زیرساخت اعتماد؟[span_19](end_span)
-   - [span_20](start_span)ایستگاه ۴: قیمت و بهانه "باید فکر کنم"؟[span_20](end_span)
-
-۴. خروجی نهایی (سند ۵ ستونه مخصوص IBS):
-   - ستون ۱: محصول چیست؟ (سیستم میان‌بر و نقشه گنج) [span_21](start_span).
-   - ستون ۲: ارزش واقعی؟ (تمرکز بر حل مشکل؛ چگونگی مهم نیست، حل شدن مهم است) [span_21](end_span).
-   - ستون ۳: مناسب چه کسانی است؟ (حداقل ۱۵ مورد درد و آرزو) [span_22](start_span)[span_23](start_span)+ بلک لیست (چه کسانی نباید بخرند)[span_22](end_span)[span_23](end_span).
-   - ستون ۴: نتایج ملموس؟ (نوشتن از زاویه‌های شیرین که مو به تن سیخ می‌کند) [span_24](start_span)[span_25](start_span).
-   - ستون ۵: انحصار و تیر خلاص؟ (مزیت انحصاری + تشدیدکننده مثل پشتیبانی مادام‌العمر) [span_24](end_span)[span_25](end_span).
-
-۵. [span_26](start_span)[span_27](start_span)پوینت‌نویسی ۱۰۰ تایی: تولید پوینت‌های افراطی در دسته‌های میل، سادگی، اثبات و انحصار[span_26](end_span)[span_27](end_span).
-
-لحن: مقتدر، فنی و بازارساز. از کلمات کتابی پرهیز کن.
+POINT نویسی: تولید ۱۰۰ پوینت در دسته‌های میل، سادگی، اثبات و انحصار.
 """
 
-# --- [بخش فنی برای رفع خطاهای Render و Telegram] ---
 app = Flask(__name__)
 @app.route('/')
-def health_check(): return "Bot is Live", 200
+def status(): return "Master Architect System is LIVE!", 200
 
+# جلوگیری از خطاهای احتمالی در تعریف ربات
 try:
-    genai.configure(api_key=GEMINI_KEY)
-    # استفاده از نسخه پایدار برای رفع خطای 404
-    model = genai.GenerativeModel('gemini-1.5-flash', system_instruction=MASTER_INSTRUCTIONS)
     bot = telebot.TeleBot(TELEGRAM_TOKEN)
+    genai.configure(api_key=GEMINI_KEY)
+    # رفع خطای 404 با استفاده از نسخه پایدار
+    model = genai.GenerativeModel('gemini-1.5-flash', system_instruction=MASTER_INSTRUCTIONS)
 except Exception as e:
-    print(f"Initial Error: {e}")
+    print(f"Error in setup: {e}")
 
 @bot.message_handler(commands=['start'])
-def send_welcome(message):
+def welcome(message):
     bot.reply_to(message, "درود! معمارِ مستر آماده کالبدشکافی محصول شماست. حوزه فعالیت و محصولتان چیست؟")
 
 @bot.message_handler(func=lambda m: True)
-def handle_all_messages(message):
+def handle_chat(message):
     try:
-        # ارسال حالت "درحال تایپ" برای زنده نگه داشتن ارتباط
         bot.send_chat_action(message.chat.id, 'typing')
         response = model.generate_content(message.text)
-        if response.text:
-            bot.reply_to(message, response.text)
-        else:
-            bot.reply_to(message, "هوش مصنوعی پاسخی تولید نکرد. دوباره تلاش کنید.")
+        bot.reply_to(message, response.text)
     except Exception as e:
-        bot.reply_to(message, f"خطای فنی: {str(e)}")
+        bot.reply_to(message, f"خطای سیستمی: {str(e)}")
 
-def run_bot():
-    # رفع خطای Conflict 409
-    bot.remove_webhook()
-    time.sleep(1)
-    bot.polling(none_stop=True, timeout=60)
+def start_polling():
+    while True:
+        try:
+            bot.remove_webhook()
+            bot.polling(none_stop=True, interval=0, timeout=20)
+        except Exception:
+            time.sleep(5)
 
 if __name__ == "__main__":
-    # اجرای همزمان ربات و پورت رندر
-    threading.Thread(target=run_bot).start()
+    threading.Thread(target=start_polling).start()
+    # استفاده از پورت پیش‌فرض رندر
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
