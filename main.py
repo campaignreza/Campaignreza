@@ -7,7 +7,6 @@ import threading
 
 TELEGRAM_TOKEN = os.environ.get('TELEGRAM_TOKEN', '8768715789:AAGgFiAByPexTWu6iyMIFYZC82bhpNm8Pqo')
 GEMINI_KEY = os.environ.get('GEMINI_KEY', 'AIzaSyC4L121FsH2KGLCFnWCOxHhiXl-pS9rHlU')
-GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_KEY}"
 
 MASTER_INSTRUCTIONS = """
 هویت و رسالت:
@@ -63,41 +62,45 @@ def ask_gemini(user_id, user_message):
     """ارسال پیام به Gemini API با REST مستقیم"""
     if user_id not in user_history:
         user_history[user_id] = []
-    
-    user_history[user_id].append({
-        "role": "user",
-        "parts": [{"text": user_message}]
-    })
-    
+        # اولین پیام = دستورالعمل + سوال کاربر
+        first_message = MASTER_INSTRUCTIONS + "\n\n" + user_message
+        user_history[user_id].append({
+            "role": "user",
+            "parts": [{"text": first_message}]
+        })
+    else:
+        user_history[user_id].append({
+            "role": "user",
+            "parts": [{"text": user_message}]
+        })
+
     payload = {
-        "system_instruction": {
-            "parts": [{"text": MASTER_INSTRUCTIONS}]
-        },
         "contents": user_history[user_id],
         "generationConfig": {
             "temperature": 0.9,
-            "maxOutputTokens": 8192
+            "maxOutputTokens": 2048
         }
     }
-    
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_KEY}"
-    
+
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={GEMINI_KEY}"
+
     response = requests.post(url, json=payload, timeout=60)
     response.raise_for_status()
-    
+
     data = response.json()
     reply = data['candidates'][0]['content']['parts'][0]['text']
-    
+
     user_history[user_id].append({
         "role": "model",
         "parts": [{"text": reply}]
     })
-    
+
     # حفظ حداکثر ۲۰ پیام آخر
     if len(user_history[user_id]) > 20:
         user_history[user_id] = user_history[user_id][-20:]
-    
+
     return reply
+
 
 @bot.message_handler(commands=['start'])
 def start(message):
